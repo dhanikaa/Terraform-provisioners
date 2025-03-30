@@ -1,67 +1,112 @@
-# AWS EC2 Flask App Deployment with Terraform
+# Terraform and Flask App on AWS
 
-This project demonstrates the use of Terraform to set up a basic AWS infrastructure. It provisions an EC2 instance running a Flask application, along with a VPC, subnet, internet gateway, and security group.
+This project demonstrates how to use **Terraform** to provision an **AWS infrastructure** and deploy a **Flask web application**. The Flask app is deployed on an **EC2 instance** within a VPC, with a public subnet and a security group configured for HTTP and SSH access.
 
-## Overview
+## Architecture Overview
 
-This Terraform configuration performs the following steps:
+- **AWS Infrastructure:**
+  - **VPC** with CIDR block `10.0.0.0/16`
+  - **Subnet** in `us-east-1a` with CIDR block `10.0.0.0/24`
+  - **Internet Gateway** for internet connectivity
+  - **Security Group** to allow HTTP (port 80) and SSH (port 22) access
+  - **EC2 Instance** running a Flask app
 
-1. **Provider Configuration:**
-   - Configures Terraform to use AWS in the `us-east-1` region.
+- **Flask Application:**
+  - The Flask application is a simple "Hello, Terraform!" web service running on port 80.
 
-2. **Variable:**
-   - Defines a CIDR block `10.0.0.0/16` for the VPC.
+## Pre-requisites
 
-3. **AWS Key Pair:**
-   - Creates an SSH key pair named `terraform-demo` using the public key from `~/.ssh/id_rsa.pub`.
+Before you begin, ensure that you have the following installed on your local machine:
 
-4. **AWS VPC:**
-   - Creates a VPC with a CIDR block of `10.0.0.0/16`.
+- [Terraform](https://www.terraform.io/downloads)
+- [AWS CLI](https://aws.amazon.com/cli/)
+- [Python](https://www.python.org/downloads/)
+- [SSH Key Pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for secure SSH access to the EC2 instance
 
-5. **AWS Subnet:**
-   - Creates a subnet within the VPC with a CIDR block of `10.0.0.0/24`, specifically in availability zone `us-east-1a`, enabling public IP assignment.
+Make sure to generate an SSH key pair and place the public key in the correct location on your system:
 
-6. **AWS Internet Gateway:**
-   - Attaches an internet gateway to the VPC to enable internet access for instances.
+```bash
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+```
 
-7. **AWS Route Table & Association:**
-   - Sets up a route table for routing traffic to the internet through the internet gateway and associates it with the subnet.
+## Getting Started
 
-8. **AWS Security Group:**
-   - Creates a security group allowing HTTP (port 80) and SSH (port 22) traffic from anywhere, and egress traffic to anywhere.
+Follow these steps to deploy the Flask app on AWS using Terraform:
 
-9. **AWS EC2 Instance:**
-   - Launches a `t2.micro` EC2 instance using the specified Amazon Machine Image (AMI).
-   - The instance is connected to the subnet and security group and is configured for SSH access.
+### 1. Clone the repository
 
-10. **Provisioners:**
-    - Copies the `app.py` file to the instance and runs commands to:
-      1. Update the package list.
-      2. Install Python's pip package manager.
-      3. Install Flask.
-      4. Run the `app.py` Flask application in the background.
+```bash
+git clone <your-repository-url>
+cd <your-repository-folder>
+```
 
-## How to Run
+### 2. Initialize Terraform
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
+Run the following command to initialize the Terraform configuration and download the necessary provider plugins.
 
-2. Initialize Terraform:
-   ```bash
-   terraform init
-   ```
+```bash
+terraform init
+```
 
-3. Apply the Terraform configuration:
-   ```bash
-   terraform apply
-   ```
+### 3. Apply the Terraform Configuration
 
-4. Follow the prompt to confirm the infrastructure creation.
+Run the following command to create the AWS resources specified in the `main.tf` file:
 
-After successful deployment, the EC2 instance will be running the Flask app, and you can SSH into it using the key specified.
+```bash
+terraform apply
+```
 
----
+This command will prompt you to confirm the action. Type `yes` to proceed.
 
-This project provides a simple template to deploy a Python Flask application on AWS using Terraform.
+### 4. SSH into the EC2 Instance
+
+Once the `terraform apply` process is complete, note the public IP address of the EC2 instance that was created. You can find this in the Terraform output or the AWS EC2 Dashboard.
+
+SSH into the EC2 instance using the private key you generated earlier:
+
+```bash
+ssh -i ~/.ssh/id_rsa ubuntu@<ec2-public-ip>
+```
+
+### 5. Access the Flask Application
+
+After SSHing into the EC2 instance, the Flask application will be running on port 80. Open your web browser and navigate to the public IP address of the instance:
+
+```
+http://<ec2-public-ip>
+```
+
+You should see the message:
+
+```
+Hello, Terraform!
+```
+
+## Files
+
+- `app.py`: The Flask application that returns a simple message “Hello, Terraform!”
+- `main.tf`: Terraform configuration file that defines the AWS resources (VPC, subnet, security group, EC2 instance).
+- `terraform.tfvars`: Optionally, you can use this file to define your variable values, such as the CIDR block for your VPC.
+
+## Resources Created
+
+- **VPC** with CIDR block `10.0.0.0/16`
+- **Subnet** in availability zone `us-east-1a`
+- **Internet Gateway** to enable public internet access
+- **Security Group** allowing HTTP and SSH traffic
+- **EC2 Instance** running the Flask application on Ubuntu
+
+## Clean Up
+
+To remove all the resources created by Terraform, run the following command:
+
+```bash
+terraform destroy
+```
+
+This will prompt you to confirm the deletion of all resources. Type `yes` to proceed.
+
+## Troubleshooting
+
+- If the Flask app is not accessible, check the Security Group settings to ensure that port 80 is open for inbound traffic.
+- If the EC2 instance is not starting, check the instance logs in the AWS EC2 console for more details.
